@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'csv'
+require 'google-apis-civicinfo_v2'
 csv_filename = 'event_attendees.csv'
 ZIP_STANDARD = 5
 
@@ -17,6 +18,21 @@ def fix_zip_length(zip)
   end
 end
 
+def get_legislators_by_zip(zip)
+  begin
+    civic_info = Google::Apis::CivicinfoV2::CivicInfoService.new
+    civic_info.key = 'AIzaSyClRzDqDh5MsXwnCWi0kOiiBivP6JsSyBw'
+    api_response = civic_info.representative_info_by_address(
+      address: zip,
+      levels: 'country',
+      roles: ['legislatorUpperBody', 'legislatorLowerBody']
+    )
+    api_response.officials.map(&:name).join(', ')
+  rescue
+    'www.commoncause.org/take-action/find-elected-officials'
+  end
+end
+
 puts 'Event Manager Initialized!'
 
 if File.exist?(csv_filename)
@@ -28,7 +44,8 @@ if File.exist?(csv_filename)
     zip_code    = record[:zipcode]
 
     zip_code = fix_zip_length(zip_code)
-    puts "#{first_name} #{last_name}, #{zip_code}"
+    legislators_string = get_legislators_by_zip(zip_code)
+    puts "#{first_name} #{last_name}, #{zip_code}: #{legislators_string}"
   end
 else
   puts "#{csv_filename} not found."
