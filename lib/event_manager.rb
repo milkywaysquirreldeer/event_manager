@@ -3,8 +3,10 @@
 
 require 'csv'
 require 'google-apis-civicinfo_v2'
+
 csv_filename = 'event_attendees.csv'
 ZIP_STANDARD = 5
+template_letter = File.read('form_letter.html')
 
 def fix_zip_length(zip)
   if zip.nil?
@@ -46,6 +48,10 @@ if File.exist?(csv_filename)
     zip_code = fix_zip_length(zip_code)
     legislators_string = get_legislators_by_zip(zip_code)
     puts "#{first_name} #{last_name}, #{zip_code}: #{legislators_string}"
+
+    personal_letter = template_letter.gsub('FIRST_NAME', first_name)
+    personal_letter = personal_letter.gsub!('LEGISLATORS', legislators_string)
+    puts personal_letter
   end
 else
   puts "#{csv_filename} not found."
